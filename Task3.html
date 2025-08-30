@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tic-Tac-Toe Neon</title>
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Orbitron', Arial, sans-serif;
+      background: radial-gradient(circle at 50% 60%, #180b42 55%, #2a0a34 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Neon grid lines */
+    body:before {
+      content: "";
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: 350px; height: 350px;
+      z-index: 0;
+      background: 
+        repeating-linear-gradient(0deg, #8931fa33 2px, transparent 27px, transparent 115px),
+        repeating-linear-gradient(90deg, #8931fa33 2px, transparent 27px, transparent 115px);
+      box-shadow:
+        0 0 50px 4px #a110ca44,
+        0 0 100px 30px #22004044;
+      opacity: 0.7;
+      animation: gridmove 8s linear infinite alternate;
+    }
+    @keyframes gridmove {
+      0% { filter: hue-rotate(0deg); }
+      100% { filter: hue-rotate(60deg); }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+    }
+    h1 {
+      color: #fff;
+      text-shadow: 0 0 40px #e600ff, 0 0 6px #8FD1FF;
+      font-family: 'Orbitron', Arial, sans-serif;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 7px;
+      margin: 15px auto 30px auto;
+      border-radius: 10px;
+      padding: 12px;
+      background: rgba(18, 8, 54, 0.85);
+      border: 2px solid #b86eff;
+      box-shadow: 0 0 35px 5px #ae41ff, 0 0 70px 15px #0f0059;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      background: #080021;
+      border-radius: 10px;
+      border: 2.2px solid #5200aa;
+      font-size: 3em;
+      font-family: 'Orbitron', Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 0 14px #6633cc inset;
+      transition: background 0.25s, box-shadow 0.3s;
+    }
+    .cell.taken {
+      cursor: not-allowed;
+    }
+    /* Neon X and O */
+    .cell.x {
+      color: #38a1ee;
+      text-shadow:
+        0 0 8px #38a1ee,
+        0 0 18px #38a1ee,
+        0 0 64px #2179e6;
+      font-weight: bold;
+      letter-spacing: 0.1em;
+    }
+    .cell.o {
+      color: #ff2255;
+      text-shadow:
+        0 0 8px #ff2255,
+        0 0 18px #ff2255,
+        0 0 64px #ae006f;
+      font-weight: bold;
+      letter-spacing: 0.1em;
+    }
+    /* Winning highlight */
+    .cell.win {
+      background: #f4f41640;
+      box-shadow: 0 0 35px 7px #ffae00, 0 0 60px 22px #7c2ae6aa;
+      animation: winnerpulse 0.7s alternate infinite;
+    }
+    @keyframes winnerpulse {
+      from { background: #ffeb3b40; }
+      to   { background: #ffc10760; }
+    }
+    #status {
+      margin: 10px 0 22px;
+      font-weight: bold;
+      font-size: 19px;
+      color: #98e0ff;
+      text-shadow: 0 0 18px #38a1ee;
+      letter-spacing: 0.07em;
+    }
+    button {
+      padding: 10px 30px;
+      font-size: 16px;
+      color: #fff;
+      background: linear-gradient(90deg,#7c2ae6 40%,#38a1ee 100%);
+      border: none; border-radius: 8px;
+      box-shadow: 0 0 10px #7c2ae6;
+      font-family: 'Orbitron', Arial, sans-serif;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: box-shadow 0.2s;
+    }
+    button:hover {
+      box-shadow: 0 0 18px 1px #fff, 0 0 38px #38a1ee;
+    }
+    /* Neon strike-through line */
+    .strike {
+      position: absolute;
+      z-index: 2;
+      pointer-events: none;
+      background: linear-gradient(
+        90deg,
+        #fff176 0%,
+        #fff 50%,
+        #ff2ae6 100%
+      );
+      box-shadow: 0 0 24px 3px #ff2ae6cc,0 0 62px 12px #7c2ae6a0;
+      border-radius: 6px;
+      opacity: 0.92;
+      animation: strikegrow 0.7s;
+    }
+    @keyframes strikegrow {
+      0% { transform: scaleX(0); }
+      100% { transform: scaleX(1); }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css?family=Orbitron:700" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <h1>Neon Tic-Tac-Toe</h1>
+    <div id="status">Player X's turn</div>
+    <div id="board" class="board"></div>
+    <button id="resetBtn">Reset Game</button>
+  </div>
+  <!-- Strike-through line element (will be created dynamically) -->
+
+  <script>
+    const board = document.getElementById("board");
+    const statusText = document.getElementById("status");
+    const resetBtn = document.getElementById("resetBtn");
+    const container = document.querySelector('.container');
+    let currentPlayer = "X";
+    let gameActive = true;
+    let gameState = ["", "", "", "", "", "", "", "", ""];
+
+    const winningConditions = [
+      [0, 1, 2], // row 1
+      [3, 4, 5], // row 2
+      [6, 7, 8], // row 3
+      [0, 3, 6], // col 1
+      [1, 4, 7], // col 2
+      [2, 5, 8], // col 3
+      [0, 4, 8], // diag TL-BR
+      [2, 4, 6], // diag TR-BL
+    ];
+
+    function createStrike(winningCombo){
+      // Remove previous strike if any
+      let oldStrike = document.querySelector('.strike');
+      if(oldStrike) oldStrike.remove();
+
+      // Board/Cell layout: translate winning pattern to x/y/rotation/width
+      const cellSize = board.children[0].offsetWidth + 7; // size + gap
+      let left=0, top=0, width=cellSize*3, rotate=0;
+      // Rows
+      if(winningCombo===0 && winningCombo[1]===1 && winningCombo[2]===2){
+        left = 0; top = cellSize*0.5-6;
+        width = cellSize*3; rotate = 0;
+      }else if(winningCombo===3){
+        left = 0; top = cellSize*1.5-6;
+        width = cellSize*3; rotate = 0;
+      }else if(winningCombo===6){
+        left = 0; top = cellSize*2.5-6;
+        width = cellSize*3; rotate = 0;
+      }
+      // Columns
+      else if(winningCombo===0 && winningCombo[1]===3 && winningCombo[2]===6){
+        left = cellSize*0.5-6; top = 0;
+        width = cellSize*3; rotate = 90;
+      }else if(winningCombo===1){
+        left = cellSize*1.5-6; top = 0;
+        width = cellSize*3; rotate = 90;
+      }else if(winningCombo===2){
+        left = cellSize*2.5-6; top = 0;
+        width = cellSize*3; rotate = 90;
+      }
+      // Diagonal \
+      else if(winningCombo===0 && winningCombo[1]===4 && winningCombo[2]===8){
+        left = 0; top = 0;
+        width = Math.sqrt(2)*(cellSize*3-14);
+        rotate = 45;
+      }
+      // Diagonal /
+      else if(winningCombo===2 && winningCombo[1]===4 && winningCombo[2]===6){
+        left = cellSize*3-14; top = 0;
+        width = Math.sqrt(2)*(cellSize*3-14);
+        rotate = 135;
+      }
+
+      // Create & style the strike-through line
+      const strike = document.createElement('div');
+      strike.className = 'strike';
+      strike.style.width = width + 'px';
+      strike.style.height = '14px';
+      strike.style.left = board.offsetLeft + left + 'px';
+      strike.style.top = board.offsetTop + top + 'px';
+      strike.style.transform = `rotate(${rotate}deg)`;
+      // Overlay strike on main window instead of inside board
+      container.appendChild(strike);
+    }
+
+    function createBoard() {
+      board.innerHTML = "";
+      gameState = ["", "", "", "", "", "", "", "", ""];
+      gameActive = true;
+      currentPlayer = "X";
+      statusText.textContent = `Player ${currentPlayer}'s turn`;
+      document.querySelectorAll('.strike').forEach(l=>l.remove());
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.dataset.index = i;
+        cell.addEventListener("click", handleCellClick);
+        board.appendChild(cell);
+      }
+    }
+
+    function handleCellClick(e) {
+      const index = e.target.dataset.index;
+      if (gameState[index] !== "" || !gameActive) return;
+      gameState[index] = currentPlayer;
+      e.target.textContent = currentPlayer;
+      e.target.classList.add('taken');
+      e.target.classList.add(currentPlayer.toLowerCase());
+      checkResult();
+    }
+
+    function checkResult() {
+      let roundWon = false;
+      let winningCombo = [];
+      for (let condition of winningConditions) {
+        const [a, b, c] = condition;
+        if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
+          roundWon = true;
+          winningCombo = condition;
+          break;
+        }
+      }
+      if (roundWon) {
+        statusText.textContent = `🎉 Player ${currentPlayer} wins!`;
+        gameActive = false;
+        winningCombo.forEach(i => {
+          board.children[i].classList.add("win");
+        });
+        // Neon strike-through
+        createStrike(winningCombo);
+        return;
+      }
+
+      if (!gameState.includes("")) {
+        statusText.textContent = "It's a draw! 😮";
+        gameActive = false;
+        document.querySelectorAll('.strike').forEach(l=>l.remove());
+        return;
+      }
+
+      currentPlayer = currentPlayer === "X" ? "O" : "X";
+      statusText.textContent = `Player ${currentPlayer}'s turn`;
+    }
+
+    resetBtn.addEventListener("click", createBoard);
+
+    // Initial load
+    window.onload = createBoard;
+    window.onresize = ()=>{document.querySelectorAll('.strike').forEach(l=>l.remove())};
+  </script>
+</body>
+</html>
